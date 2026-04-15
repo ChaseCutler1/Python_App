@@ -9,7 +9,7 @@ import scipy.stats as stats_sci
 from scipy.optimize import minimize
 from datetime import datetime, timedelta
 
-# --- 3. HELPER FUNCTIONS ---
+# --- 1. HELPER FUNCTIONS ---
 @st.cache_data(ttl=3600)
 def get_data(tickers, start, end):
     import time
@@ -60,10 +60,10 @@ def get_portfolio_stats(weights, returns, rf_annual):
     max_dd = ((cum_ret - cum_ret.cummax()) / cum_ret.cummax()).min()
     return p_ret, p_vol, sharpe, sortino, max_dd
 
-# --- 1. PAGE CONFIGURATION ---
+# --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Portfolio Analytics Pro", layout="wide")
 
-# --- 2. SIDEBAR INPUTS ---
+# --- 3. SIDEBAR INPUTS ---
 st.sidebar.header("Configuration")
 ticker_input = st.sidebar.text_input("Tickers (3-10):", value="AAPL, MSFT, GOOGL, AMZN")
 tickers = [t.strip().upper() for t in ticker_input.split(",") if t.strip()]
@@ -93,7 +93,7 @@ if not tickers:
     st.info("Please enter 3-10 tickers in the sidebar.")
     st.stop()
 else:
-    # 1. Fetch data
+    # A. Fetch data
     df_prices, error = get_data(tickers, start_date, end_date)
 
     if error:
@@ -101,10 +101,10 @@ else:
         st.stop()
         
     elif df_prices is not None:
-        # 2. Universal Ticker Check: Remove columns that failed to download
+        # B. Universal Ticker Check: Remove columns that failed to download
         df_prices = df_prices.dropna(axis=1, how='all')
         
-        # 3. Precision Ticker Check
+        # C. Precision Ticker Check
         # Convert columns to a set for a faster, cleaner comparison
         downloaded_tickers = set(df_prices.columns)
         input_tickers = set(tickers)
@@ -117,13 +117,13 @@ else:
             st.info("The tickers listed above are not recognized. Please remove or fix them to continue.")
             st.stop()
 
-        # 4. Success: Define clean data for the rest of the app
+        # D. Success: Define clean data for the rest of the app
         df_returns = df_prices.pct_change().dropna()
         stock_list = [t for t in tickers if t in df_prices.columns]
         stock_returns = df_returns[stock_list]
         n_assets = len(stock_list)
 
-        # --- 5. MATH & OPTIMIZATIONS (Required for your tabs) ---
+        # --- 5. MATH & OPTIMIZATIONS ---
         avg_rets = stock_returns.mean() * 252
         cov_mat = stock_returns.cov() * 252
         init_w = np.array([1. / n_assets] * n_assets)
