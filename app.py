@@ -9,31 +9,6 @@ import scipy.stats as stats_sci
 from scipy.optimize import minimize
 from datetime import datetime, timedelta
 
-# --- 1. PAGE CONFIGURATION ---
-st.set_page_config(page_title="Portfolio Analytics Pro", layout="wide")
-
-# --- 2. SIDEBAR INPUTS ---
-st.sidebar.header("Configuration")
-ticker_input = st.sidebar.text_input("Tickers (3-10):", value="AAPL, MSFT, GOOGL, AMZN")
-tickers = [t.strip().upper() for t in ticker_input.split(",") if t.strip()]
-
-if len(tickers) > 10:
-    st.error("⚠️ Max 10 tickers allowed.")
-    st.stop()
-elif len(tickers) < 3 and len(tickers) > 0:
-    st.warning("⚠️ Minimum 3 tickers required.")
-    st.stop()
-
-col1, col2 = st.sidebar.columns(2)
-start_date = col1.date_input("Start Date", datetime.now() - timedelta(days=365*3))
-end_date = col2.date_input("End Date", datetime.now())
-
-if (end_date - start_date).days <= 730:
-    st.error("⚠️ Range Error: Minimum 2 years required.")
-    st.stop()
-
-rf_rate_annual = st.sidebar.number_input("Risk-Free Rate (%)", value=2.0) / 100
-
 # --- 3. HELPER FUNCTIONS ---
 @st.cache_data(ttl=3600)
 def get_data(tickers, start, end):
@@ -84,6 +59,33 @@ def get_portfolio_stats(weights, returns, rf_annual):
     cum_ret = (1 + (returns @ weights)).cumprod()
     max_dd = ((cum_ret - cum_ret.cummax()) / cum_ret.cummax()).min()
     return p_ret, p_vol, sharpe, sortino, max_dd
+
+# --- 1. PAGE CONFIGURATION ---
+st.set_page_config(page_title="Portfolio Analytics Pro", layout="wide")
+
+# --- 2. SIDEBAR INPUTS ---
+st.sidebar.header("Configuration")
+ticker_input = st.sidebar.text_input("Tickers (3-10):", value="AAPL, MSFT, GOOGL, AMZN")
+tickers = [t.strip().upper() for t in ticker_input.split(",") if t.strip()]
+
+if len(tickers) > 10:
+    st.error("⚠️ Max 10 tickers allowed.")
+    st.stop()
+elif len(tickers) < 3 and len(tickers) > 0:
+    st.warning("⚠️ Minimum 3 tickers required.")
+    st.stop()
+
+col1, col2 = st.sidebar.columns(2)
+start_date = col1.date_input("Start Date", datetime.now() - timedelta(days=365*3))
+end_date = col2.date_input("End Date", datetime.now())
+
+if (end_date - start_date).days <= 730:
+    st.error("⚠️ Range Error: Minimum 2 years required.")
+    st.stop()
+
+rf_rate_annual = st.sidebar.number_input("Risk-Free Rate (%)", value=2.0) / 100
+
+
 
 
 # --- 4. DATA FETCHING & VALIDATION ---
