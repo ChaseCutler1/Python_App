@@ -37,24 +37,14 @@ rf_rate_annual = st.sidebar.number_input("Risk-Free Rate (%)", value=2.0) / 100
 # --- 3. HELPER FUNCTIONS ---
 @st.cache_data(ttl=3600)
 def get_data(tickers, start, end):
-    import time # Ensures the "wait" command works
-    
-    # We try 3 times automatically so the user doesn't see an error
-    for attempt in range(3):
-        try:
-            # Download the stocks + the S&P 500 benchmark
-            # We use 'Adj Close' because the rubric requires it
-            data = yf.download(tickers + ['^GSPC'], start=start, end=end)['Adj Close']
-            
-            if not data.empty and data.shape[1] >= len(tickers):
-                return data, None  # Success!
-                
-        except Exception as e:
-            if attempt == 2: # If third try fails, finally show the error
-                return None, str(e)
-            time.sleep(1) # Wait 1 second before trying again
-            
-    return None, "Yahoo Finance is busy. Please refresh the page."
+    try:
+        all_symbols = tickers + ["^GSPC"]
+        data = yf.download(all_symbols, start=start, end=end, auto_adjust=True)
+        if data.empty: return None, "No data found."
+        prices = data['Close'] if isinstance(data.columns, pd.MultiIndex) else data
+        return prices.dropna(), None
+    except Exception as e:
+        return None, str(e)
 
 def get_portfolio_stats(weights, returns, rf_annual):
     weights = np.array(weights)
